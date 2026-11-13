@@ -8,6 +8,7 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.media.projection.*;
 import android.os.*;
+import android.util.DisplayMetrics;
 import android.view.*;
 import android.widget.*;
 import java.nio.ByteBuffer;

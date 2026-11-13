@@ -19,7 +19,8 @@ public class AimService extends AccessibilityService {
         swipePath.moveTo(startX, startY);
         swipePath.lineTo(endX, endY);
         GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
-        gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 15));
+        // 1 milissegundo = Snap instantâneo na cabeça
+        gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 1));
         dispatchGesture(gestureBuilder.build(), null, null);
     }
 

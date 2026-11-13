@@ -2,12 +2,16 @@ package com.pulse.ffvision;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.view.Gravity;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
@@ -17,30 +21,39 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(50, 50, 50, 50);
+        layout.setBackgroundColor(Color.parseColor("#121212"));
+        layout.setGravity(Gravity.CENTER);
+        layout.setPadding(60, 60, 60, 60);
+
+        TextView title = new TextView(this);
+        title.setText("FF VISION V2");
+        title.setTextColor(Color.parseColor("#BB86FC"));
+        title.setTextSize(32f);
+        title.setGravity(Gravity.CENTER);
+        layout.addView(title);
 
         projectionManager = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
 
-        Button btnOverlay = new Button(this);
-        btnOverlay.setText("1. Ativar Permissao de Tela (Overlay)");
+        Button btnOverlay = createButton("1. Permitir Tela (Overlay)");
         btnOverlay.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))));
 
-        Button btnAim = new Button(this);
-        btnAim.setText("2. Ativar Aimbot (Acessibilidade)");
+        Button btnAim = createButton("2. Ativar Acessibilidade");
         btnAim.setOnClickListener(v -> {
             startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
             Toast.makeText(this, "Ative o FF Vision", Toast.LENGTH_LONG).show();
         });
 
-        Button btnStart = new Button(this);
-        btnStart.setText("3. INICIAR VISION");
+        Button btnStart = createButton("INICIAR CHEAT");
+        btnStart.setBackgroundColor(Color.parseColor("#03DAC6"));
+        btnStart.setTextColor(Color.BLACK);
         btnStart.setOnClickListener(v -> {
             if (Settings.canDrawOverlays(this)) {
                 startActivityForResult(projectionManager.createScreenCaptureIntent(), REQUEST_CODE);
             } else {
-                Toast.makeText(this, "De a permissao de Overlay primeiro!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "De a permissao de Overlay!", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -48,6 +61,18 @@ public class MainActivity extends Activity {
         layout.addView(btnAim);
         layout.addView(btnStart);
         setContentView(layout);
+    }
+
+    private Button createButton(String text) {
+        Button btn = new Button(this);
+        btn.setText(text);
+        btn.setBackgroundColor(Color.parseColor("#333333"));
+        btn.setTextColor(Color.WHITE);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, 30, 0, 30);
+        btn.setLayoutParams(params);
+        return btn;
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.pulse.ffvision;
 import android.app.*;
 import android.content.Intent;
 import android.graphics.*;
+import android.graphics.drawable.GradientDrawable;
 import android.hardware.display.*;
 import android.media.Image;
 import android.media.ImageReader;
@@ -26,24 +27,61 @@ public class OverlayService extends Service {
         startForeground(1, createNotification());
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
         
+        // --- CRIAÇÃO DO MENU MODERNO ---
         menuLayout = new LinearLayout(this);
         menuLayout.setOrientation(LinearLayout.VERTICAL);
-        menuLayout.setBackgroundColor(Color.parseColor("#AA000000"));
+        menuLayout.setPadding(30, 30, 30, 30);
         
-        Button btnEsp = new Button(this); btnEsp.setText("ESP: OFF");
-        btnEsp.setOnClickListener(v -> { isEsp = !isEsp; btnEsp.setText(isEsp ? "ESP: ON" : "ESP: OFF"); });
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(Color.parseColor("#E6000000"));
+        bg.setCornerRadius(30f);
+        bg.setStroke(3, Color.parseColor("#BB86FC"));
+        menuLayout.setBackground(bg);
+        
+        TextView title = new TextView(this);
+        title.setText("FF VISION V2");
+        title.setTextColor(Color.parseColor("#BB86FC"));
+        title.setTextSize(18f);
+        title.setGravity(Gravity.CENTER);
+        title.setPadding(0, 0, 0, 20);
+        menuLayout.addView(title);
 
-        Button btnAim = new Button(this); btnAim.setText("Aimbot: OFF");
-        btnAim.setOnClickListener(v -> { isAim = !isAim; btnAim.setText(isAim ? "Aimbot: ON" : "Aimbot: OFF"); });
+        Button btnEsp = createMenuButton("ESP: OFF");
+        btnEsp.setOnClickListener(v -> { isEsp = !isEsp; btnEsp.setText(isEsp ? "ESP: ON" : "ESP: OFF"); btnEsp.setTextColor(isEsp ? Color.GREEN : Color.WHITE); });
+
+        Button btnAim = createMenuButton("AIMBOT: OFF");
+        btnAim.setOnClickListener(v -> { isAim = !isAim; btnAim.setText(isAim ? "AIMBOT: ON" : "AIMBOT: OFF"); btnAim.setTextColor(isAim ? Color.GREEN : Color.WHITE); });
 
         menuLayout.addView(btnEsp); menuLayout.addView(btnAim);
         
         WindowManager.LayoutParams p = new WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT);
-        p.gravity = Gravity.TOP | Gravity.START; p.x = 100; p.y = 100;
+        p.gravity = Gravity.TOP | Gravity.START; p.x = 50; p.y = 200;
+        
+        // Permite arrastar o menu
+        menuLayout.setOnTouchListener(new View.OnTouchListener() {
+            private int initialX, initialY;
+            private float initialTouchX, initialTouchY;
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        initialX = p.x; initialY = p.y;
+                        initialTouchX = event.getRawX(); initialTouchY = event.getRawY();
+                        return true;
+                    case MotionEvent.ACTION_MOVE:
+                        p.x = initialX + (int) (event.getRawX() - initialTouchX);
+                        p.y = initialY + (int) (event.getRawY() - initialTouchY);
+                        wm.updateViewLayout(menuLayout, p);
+                        return true;
+                }
+                return false;
+            }
+        });
         wm.addView(menuLayout, p);
 
+        // --- CRIAÇÃO DO ESP ---
         espView = new ESPView(this);
         WindowManager.LayoutParams ep = new WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT,
@@ -68,26 +106,44 @@ public class OverlayService extends Service {
         return START_STICKY;
     }
 
+    private Button createMenuButton(String text) {
+        Button btn = new Button(this);
+        btn.setText(text);
+        btn.setBackgroundColor(Color.TRANSPARENT);
+        btn.setTextColor(Color.WHITE);
+        btn.setTextSize(14f);
+        return btn;
+    }
+
     private void processImage(Image image, int w, int h) {
         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
         Bitmap bmp = Bitmap.createBitmap(w + image.getPlanes()[0].getRowStride() / image.getPlanes()[0].getPixelStride() - w, h, Bitmap.Config.ARGB_8888);
         bmp.copyPixelsFromBuffer(buffer);
 
         int cx = w / 2, cy = h / 2, cDist = Integer.MAX_VALUE, fX = -1, fY = -1;
-        for (int y = 200; y < h - 200; y += 15) {
-            for (int x = 0; x < w; x += 15) {
+        
+        // Otimização: Varrer a tela em blocos maiores para não travar
+        for (int y = 200; y < h - 200; y += 12) {
+            for (int x = 0; x < w; x += 12) {
                 int px = bmp.getPixel(x, y);
-                if (Color.red(px) > 150 && Color.green(px) < 80 && Color.blue(px) < 80) {
+                int r = Color.red(px), g = Color.green(px), b = Color.blue(px);
+                
+                // Filtro de Vermelho do Free Fire (Nome/Barra de vida)
+                if (r > 150 && g < 80 && b < 80) {
                     int d = Math.abs(x - cx) + Math.abs(y - cy);
                     if (d < cDist) { cDist = d; fX = x; fY = y; }
                 }
             }
         }
+        
         final int tX = fX, tY = fY;
         new Handler(Looper.getMainLooper()).post(() -> {
             espView.setTarget(tX, tY, w, h);
+            
+            // SNAP AIMBOT: Puxa com força total para a cabeça
             if (isAim && tX != -1 && AimService.instance != null) {
-                AimService.instance.dragAim((tX - cx) * 0.5f, (tY - cy) * 0.5f);
+                // Multiplicador 1.0 = Puxa exatamente para o centro do alvo
+                AimService.instance.dragAim((tX - cx) * 1.0f, (tY - cy) * 1.0f);
             }
         });
     }

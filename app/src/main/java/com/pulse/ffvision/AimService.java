@@ -13,13 +13,13 @@ public class AimService extends AccessibilityService {
 
     public void dragAim(float dx, float dy) {
         if (instance == null) return;
-        float startX = 540, startY = 1200;
+        float startX = 540, startY = 1200; // Centro aproximado da tela
         float endX = startX + dx, endY = startY + dy;
         Path swipePath = new Path();
         swipePath.moveTo(startX, startY);
         swipePath.lineTo(endX, endY);
         GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
-        // 1 milissegundo = Snap instantâneo na cabeça
+        // 1ms = Snap instantâneo
         gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 1));
         dispatchGesture(gestureBuilder.build(), null, null);
     }

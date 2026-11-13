@@ -4,40 +4,41 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PointF;
 import android.view.View;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ESPView extends View {
-    private Paint paintBox, paintLine;
-    private int targetX = -1, targetY = -1;
-    private int screenW, screenH;
+    private Paint paintBox, paintText;
+    private List<PointF> targets = new ArrayList<>();
 
     public ESPView(Context context) {
         super(context);
         paintBox = new Paint();
-        paintBox.setColor(Color.parseColor("#BB86FC")); // Roxo Neon
+        paintBox.setColor(Color.parseColor("#00FFCC")); // Ciano Neon
         paintBox.setStyle(Paint.Style.STROKE);
-        paintBox.setStrokeWidth(6f);
+        paintBox.setStrokeWidth(5f);
 
-        paintLine = new Paint();
-        paintLine.setColor(Color.RED);
-        paintLine.setStrokeWidth(2f);
+        paintText = new Paint();
+        paintText.setColor(Color.RED);
+        paintText.setTextSize(30f);
+        paintText.setAntiAlias(true);
     }
 
-    public void setTarget(int x, int y, int w, int h) {
-        this.targetX = x; this.targetY = y;
-        this.screenW = w; this.screenH = h;
+    public void updateTargets(List<PointF> newTargets) {
+        this.targets = newTargets;
         invalidate();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (targetX != -1 && targetY != -1) {
-            // Desenha uma caixa maior em volta do boneco
-            canvas.drawRect(targetX - 60, targetY - 50, targetX + 60, targetY + 150, paintBox);
-            
-            // Linha do centro (Skeleton)
-            canvas.drawLine(screenW/2f, screenH/2f, targetX, targetY, paintLine);
+        for (PointF t : targets) {
+            // Desenha a caixa em volta do boneco (HEAD)
+            canvas.drawRect(t.x - 40, t.y - 40, t.x + 40, t.y + 120, paintBox);
+            // Desenha texto de aviso
+            canvas.drawText("INIMIGO", t.x - 40, t.y - 50, paintText);
         }
     }
 }

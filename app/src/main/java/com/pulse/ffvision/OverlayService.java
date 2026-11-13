@@ -106,7 +106,7 @@ public class OverlayService extends Service {
         minimizedLayout = new LinearLayout(this);
         GradientDrawable bgMin = new GradientDrawable();
         bgMin.setColor(Color.parseColor("#E60F0F12"));
-        bgMin.setCornerShape(50);
+        bgMin.setCornerRadius(100f);
         bgMin.setStroke(4, Color.parseColor("#00FFCC"));
         minimizedLayout.setBackground(bgMin);
         
